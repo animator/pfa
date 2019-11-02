@@ -6,10 +6,12 @@ import sys
 from titus.genpy import PFAEngine
 from titus.errors import PFARuntimeException
 
-from runTest import *
+from runTest import getExamples, convertOut, compare
 
 inputFile, = sys.argv[1:]
 
+sys.stdout = open('out.txt', 'w', encoding='UTF-8')
+sys.stderr = open('out_err.txt', 'w')
 # Failures that I'm giving up on:
 # 
 # prob.dist.binomialQF({"p": 0.99999, "prob": 1e-05, "size": 1}) should be 1, is 0 (rounding in count)
@@ -23,15 +25,20 @@ inputFile, = sys.argv[1:]
 # prob.dist.negativeBinomialQF has many errors (though not as many as the hypergeometric)
 
 for counter, example in enumerate(getExamples(open(inputFile))):
-    engine, = PFAEngine.fromJson(example["engine"])
+    if "re." in example["function"] or "model.tree." in example["function"]:
+        print("%4d    skipped %s" % (counter + 1, example["function"]))
+        continue         
 
     if example["function"] in ("prob.dist.binomialQF", "prob.dist.hypergeometricPDF", "prob.dist.hypergeometricCDF", "prob.dist.hypergeometricQF", "prob.dist.negativeBinomialPDF", "prob.dist.negativeBinomialQF"):
+        print("%4d    skipped %s" % (counter + 1, example["function"]))
         continue
+
+    engine, = PFAEngine.fromJson(example["engine"])
 
     functionWritten = False
     def maybeWriteFunction(functionWritten):
         if not functionWritten:
-            print "%4d    %-20s%s" % (counter + 1, example["function"], json.dumps(example["engine"]))
+            print("%4d    %-20s%s" % (counter + 1, example["function"], json.dumps(example["engine"])))
         return True
 
     for trial in example["trials"]:
@@ -42,15 +49,15 @@ for counter, example in enumerate(getExamples(open(inputFile))):
             result = {"fail": err.code}
         except Exception:
             # PFAEngine.fromJson(example["engine"], debug=True)
-            print "function: " + example["function"]
-            print "engine:   " + json.dumps(example["engine"])
-            print "input:    " + repr(trial["sample"])
+            print("function: " + example["function"])
+            print("engine:   " + json.dumps(example["engine"]))
+            print("input:    " + repr(trial["sample"]))
             if "error" in trial:
-                print "expected: ERROR CODE " + repr(trial["error"])
+                print("expected: ERROR CODE " + repr(trial["error"]))
             elif "result" in trial:
-                print "expected: " + repr(trial["result"])
-            print
-            raise
+                print("expected: " + repr(trial["result"]))
+            print("")
+            continue
 
         if "success" in result:
             actual = json.dumps(result["success"])
@@ -61,9 +68,9 @@ for counter, example in enumerate(getExamples(open(inputFile))):
             if trial["error"] != result.get("fail", None):
                 functionWritten = maybeWriteFunction(functionWritten)
                 if not trialWritten:
-                    print "                            input:    " + json.dumps(trial["sample"])
-                    print "                            expected: ERROR CODE " + str(trial["error"])
-                    print "                            actual:   " + actual
+                    print("                            input:    " + json.dumps(trial["sample"]))
+                    print("                            expected: ERROR CODE " + str(trial["error"]))
+                    print("                            actual:   " + actual)
                     trialWritten = True
 
         elif trial.get("nondeterministic", None) in ("pseudorandom", "unstable"):
@@ -72,9 +79,9 @@ for counter, example in enumerate(getExamples(open(inputFile))):
         else:
             def maybeWriteTrial(trialWritten):
                 if not trialWritten:
-                    print "                            input:    " + json.dumps(trial["sample"])
-                    print "                            expected: " + json.dumps(trial["result"])
-                    print "                            actual:   " + actual
+                    print("                            input:    " + json.dumps(trial["sample"]))
+                    print("                            expected: " + json.dumps(trial["result"]))
+                    print("                            actual:   " + actual)
                 return True
 
             if "success" in result:
@@ -84,16 +91,16 @@ for counter, example in enumerate(getExamples(open(inputFile))):
                 if trial.get("nondeterministic", None) == "unordered":
                     if not isinstance(left, list) or not isinstance(right, list):
                         raise Exception
-                    left.sort()
-                    right.sort()
+#                    left.sort()
+#                    right.sort()
 
                 for errorMessage in compare(left, right, 1e-4, 0.05, 1e80):
                     functionWritten = maybeWriteFunction(functionWritten)
                     trialWritten = maybeWriteTrial(trialWritten)
-                    print "                            " + errorMessage
+                    print("                            " + errorMessage)
             else:
                 functionWritten = maybeWriteFunction(functionWritten)
                 trialWritten = maybeWriteTrial(trialWritten)
 
     if not functionWritten:
-        print "%4d    %s" % (counter + 1, example["function"])
+        print("%4d    %s" % (counter + 1, example["function"]))

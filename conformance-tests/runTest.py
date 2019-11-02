@@ -45,13 +45,13 @@ def convertIn(x, t):
         if x is None:
             return x
         else:
-            tag, value = x.items()[0]
+            tag, value = list(x.items())[0]
             for ti in t:
                 if isinstance(ti, dict) and ti["type"] in ("record", "enum", "fixed"):
                     name = ti["name"]
                 elif isinstance(ti, dict):
                     name = ti["type"]
-                elif isinstance(ti, basestring):
+                elif isinstance(ti, str):
                     name = ti
                 if tag == name:
                     return {tag: convertIn(value, ti)}
@@ -66,10 +66,10 @@ def convertOut(x, t, dobase64=True):
     elif x is True or x is False and t == "boolean":
         return x
 
-    elif isinstance(x, (int, long)) and t in ("int", "long"):
+    elif isinstance(x, int) and t in ("int", "long"):
         return x
 
-    elif isinstance(x, (int, long, float)) and t in ("float", "double"):
+    elif isinstance(x, (int, float)) and t in ("float", "double"):
         if math.isinf(x):
             if x > 0.0:
                 return "inf"
@@ -80,7 +80,7 @@ def convertOut(x, t, dobase64=True):
         else:
             return x
 
-    elif isinstance(x, basestring) and t == "string":
+    elif isinstance(x, str) and t == "string":
         return x
 
     elif isinstance(x, str) and (t == "bytes" or (isinstance(t, dict) and t["type"] == "fixed")):
@@ -105,13 +105,13 @@ def convertOut(x, t, dobase64=True):
             else:
                 raise Exception
         elif isinstance(x, dict) and len(x) == 1:
-            tag, value = x.items()[0]
+            tag, value = list(x.items())[0]
             for ti in t:
                 if isinstance(ti, dict) and ti["type"] in ("record", "enum", "fixed"):
                     name = ti["name"]
                 elif isinstance(ti, dict):
                     name = ti["type"]
-                elif isinstance(ti, basestring):
+                elif isinstance(ti, str):
                     name = ti
                 if tag == name:
                     return {tag: convertOut(value, ti, dobase64)}
@@ -145,18 +145,18 @@ def checkInputType(x, t, typeNames):
         if x is not True and x is not False:
             raise TypeError("Input incorrectly prepared: " + repr(x) + " " + json.dumps(t))
     elif t == "int" or t == "long":
-        if not isinstance(x, (int, long)):
+        if not isinstance(x, int):
             raise TypeError("Input incorrectly prepared: " + repr(x) + " " + json.dumps(t))
     elif t == "float" or t == "double":
-        if not isinstance(x, (int, long, float)):
+        if not isinstance(x, (int, float)):
             raise TypeError("Input incorrectly prepared: " + repr(x) + " " + json.dumps(t))
     elif t == "string":
-        if not isinstance(x, unicode):
-            raise TypeError("Input incorrectly prepared: " + repr(x) + " " + json.dumps(t))
-    elif t == "bytes":
         if not isinstance(x, str):
             raise TypeError("Input incorrectly prepared: " + repr(x) + " " + json.dumps(t))
-    elif isinstance(t, basestring):
+    elif t == "bytes":
+        if not isinstance(x, bytes):
+            raise TypeError("Input incorrectly prepared: " + repr(x) + " " + json.dumps(t))
+    elif isinstance(t, str):
         t = typeNames[t]
     if isinstance(t, dict) and t["type"] == "array":
         if not isinstance(x, list):
@@ -174,24 +174,24 @@ def checkInputType(x, t, typeNames):
         for f in t["fields"]:
             checkInputType(x[f["name"]], f["type"], typeNames)
     elif isinstance(t, dict) and t["type"] == "fixed":
-        if not isinstance(x, str):
+        if not isinstance(x, bytes):
             raise TypeError("Input incorrectly prepared: " + repr(x) + " " + json.dumps(t))
     elif isinstance(t, dict) and t["type"] == "enum":
-        if not isinstance(x, unicode):
+        if not isinstance(x, str):
             raise TypeError("Input incorrectly prepared: " + repr(x) + " " + json.dumps(t))
     elif isinstance(t, list):
         if x is None:
             if "null" not in t:
                 raise TypeError("Input incorrectly prepared: " + repr(x) + " " + json.dumps(t))
         elif isinstance(x, dict) and len(x) == 1:
-            tag, value = x.items()[0]
+            tag, value = list(x.items())[0]
             found = False
             for ti in t:
                 if isinstance(ti, dict) and ti["type"] in ("record", "enum", "fixed"):
                     name = ti["name"]
                 elif isinstance(ti, dict):
                     name = ti["type"]
-                elif isinstance(ti, basestring):
+                elif isinstance(ti, str):
                     name = ti
                 if tag == name:
                     found = True
@@ -200,7 +200,7 @@ def checkInputType(x, t, typeNames):
                 raise TypeError("Input incorrectly prepared: " + repr(x) + " " + json.dumps(t))
         else:
             raise TypeError("Input incorrectly prepared: " + repr(x) + " " + json.dumps(t))
-    elif not isinstance(t, basestring):
+    elif not isinstance(t, str):
         raise TypeError("Input incorrectly prepared: " + repr(x) + " " + json.dumps(t))
     return x
 
@@ -230,7 +230,7 @@ def getNamesFromFunctions(fcns):
     out = {}
     for fcn in fcns:
         for param in fcn["params"]:
-            out.update(getNamesFromType(param.values()[0]))
+            out.update(getNamesFromType(list(param.values())[0]))
         out.update(getNamesFromType(fcn["ret"]))
     return out
 
@@ -241,7 +241,7 @@ def convertInput(example):
     try:
         trials = [dict(x, sample=checkInputType(convertIn(x["sample"], inputType), inputType, typeNames)) for x in example["trials"]]
     except TypeError:
-        print example["function"] + "\t" + json.dumps(example["engine"])
+        print(example["function"] + "\t" + json.dumps(example["engine"]))
         raise
     return dict(example, trials=trials)
 
@@ -274,31 +274,31 @@ def compare(one, two, zeroTolerance, fractionalTolerance, infinityTolerance, bre
         if len(one) != len(two):
             yield "different list lengths: %d vs %d at %s" % (len(one), len(two), " -> ".join(breadcrumbs))
         else:
-            for i in xrange(len(one)):
+            for i in range(len(one)):
                 for x in compare(one[i], two[i], zeroTolerance, fractionalTolerance, infinityTolerance, breadcrumbs + [str(i)]):
                     yield x
-    elif isinstance(one, basestring) and isinstance(two, basestring):
+    elif isinstance(one, str) and isinstance(two, str):
         if one != two:
             yield "different values: %s vs %s at %s" % (json.dumps(one), json.dumps(two), " -> ".join(breadcrumbs))
     elif isinstance(one, bool) and isinstance(two, bool):
         if one != two:
             yield "different values: %r vs %r at %s" % (one, two, " -> ".join(breadcrumbs))
-    elif isinstance(one, (int, long)) and isinstance(two, (int, long)):
+    elif isinstance(one, int) and isinstance(two, int):
         if one != two:
             yield "different values: %d vs %d at %s" % (one, two, " -> ".join(breadcrumbs))
-    elif one == "inf" and isinstance(two, (int, long, float)) and two > infinityTolerance:
+    elif one == "inf" and isinstance(two, (int, float)) and two > infinityTolerance:
         pass
-    elif one == "-inf" and isinstance(two, (int, long, float)) and two < -infinityTolerance:
+    elif one == "-inf" and isinstance(two, (int, float)) and two < -infinityTolerance:
         pass
-    elif two == "inf" and isinstance(one, (int, long, float)) and one > infinityTolerance:
+    elif two == "inf" and isinstance(one, (int, float)) and one > infinityTolerance:
         pass
-    elif two == "-inf" and isinstance(one, (int, long, float)) and one < -infinityTolerance:
+    elif two == "-inf" and isinstance(one, (int, float)) and one < -infinityTolerance:
         pass
-    elif (one == "inf" or one == "-inf" or one == "nan") and isinstance(two, (int, long, float)):
+    elif (one == "inf" or one == "-inf" or one == "nan") and isinstance(two, (int, float)):
         yield "different values: %s vs %g at %s" % (one, two, " -> ".join(breadcrumbs))
-    elif (two == "inf" or two == "-inf" or two == "nan") and isinstance(one, (int, long, float)):
+    elif (two == "inf" or two == "-inf" or two == "nan") and isinstance(one, (int, float)):
         yield "different values: %g vs %s at %s" % (one, two, " -> ".join(breadcrumbs))
-    elif isinstance(one, (int, long, float)) and isinstance(two, (int, long, float)):
+    elif isinstance(one, (int, float)) and isinstance(two, (int, float)):
         if abs(one) < zeroTolerance and abs(two) < zeroTolerance:
             pass   # they're both about zero
         elif abs(one) < zeroTolerance:
@@ -317,4 +317,4 @@ def compare(one, two, zeroTolerance, fractionalTolerance, infinityTolerance, bre
 
 if __name__ == "__main__":
     for example in getExamples(open("pfa-tests.json")):
-        print json.dumps(example["engine"])
+        print(json.dumps(example["engine"]))
