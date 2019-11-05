@@ -10,7 +10,7 @@ from runTest import getExamples, convertOut, compare
 
 inputFile = sys.argv[1]
 skipFcnList = ("prob.dist.binomialQF", "prob.dist.hypergeometricPDF", "prob.dist.hypergeometricCDF", "prob.dist.hypergeometricQF", "prob.dist.negativeBinomialPDF", "prob.dist.negativeBinomialQF")
-patternFcnList = ("model.tree.")
+patternFcnList = ("model.tree.", )
 # Failures that I'm giving up on:
 # 
 # prob.dist.binomialQF({"p": 0.99999, "prob": 1e-05, "size": 1}) should be 1, is 0 (rounding in count)
