@@ -27,7 +27,7 @@ def convertIn(x, t):
             return x
 
     elif t == "bytes" or (isinstance(t, dict) and t["type"] == "fixed"):
-        return base64.b64decode(x)
+        return ''.join(map(chr, list(base64.b64decode(x))))
 
     elif isinstance(t, dict) and t["type"] == "array":
         if not isinstance(x, list): raise Exception
@@ -85,7 +85,9 @@ def convertOut(x, t, dobase64=True):
 
     elif isinstance(x, str) and (t == "bytes" or (isinstance(t, dict) and t["type"] == "fixed")):
         if dobase64:
-            return base64.b64encode(x)
+            x = bytes(map(ord, list(x)))
+            out = base64.b64encode(x)
+            return ''.join(map(chr,list(out)))
         else:
             return x
 
@@ -154,7 +156,7 @@ def checkInputType(x, t, typeNames):
         if not isinstance(x, str):
             raise TypeError("Input incorrectly prepared: " + repr(x) + " " + json.dumps(t))
     elif t == "bytes":
-        if not isinstance(x, bytes):
+        if not isinstance(x, str):
             raise TypeError("Input incorrectly prepared: " + repr(x) + " " + json.dumps(t))
     elif isinstance(t, str):
         t = typeNames[t]
@@ -174,7 +176,7 @@ def checkInputType(x, t, typeNames):
         for f in t["fields"]:
             checkInputType(x[f["name"]], f["type"], typeNames)
     elif isinstance(t, dict) and t["type"] == "fixed":
-        if not isinstance(x, bytes):
+        if not isinstance(x, str):
             raise TypeError("Input incorrectly prepared: " + repr(x) + " " + json.dumps(t))
     elif isinstance(t, dict) and t["type"] == "enum":
         if not isinstance(x, str):

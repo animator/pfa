@@ -8,10 +8,9 @@ from titus.errors import PFARuntimeException
 
 from runTest import getExamples, convertOut, compare
 
-inputFile, = sys.argv[1:]
-
-sys.stdout = open('out.txt', 'w', encoding='UTF-8')
-sys.stderr = open('out_err.txt', 'w')
+inputFile = sys.argv[1]
+skipFcnList = ("prob.dist.binomialQF", "prob.dist.hypergeometricPDF", "prob.dist.hypergeometricCDF", "prob.dist.hypergeometricQF", "prob.dist.negativeBinomialPDF", "prob.dist.negativeBinomialQF")
+patternFcnList = ("model.tree.")
 # Failures that I'm giving up on:
 # 
 # prob.dist.binomialQF({"p": 0.99999, "prob": 1e-05, "size": 1}) should be 1, is 0 (rounding in count)
@@ -25,11 +24,11 @@ sys.stderr = open('out_err.txt', 'w')
 # prob.dist.negativeBinomialQF has many errors (though not as many as the hypergeometric)
 
 for counter, example in enumerate(getExamples(open(inputFile))):
-    if "re." in example["function"] or "model.tree." in example["function"]:
+    if any([pattern in example["function"] for pattern in patternFcnList]):
         print("%4d    skipped %s" % (counter + 1, example["function"]))
         continue         
 
-    if example["function"] in ("prob.dist.binomialQF", "prob.dist.hypergeometricPDF", "prob.dist.hypergeometricCDF", "prob.dist.hypergeometricQF", "prob.dist.negativeBinomialPDF", "prob.dist.negativeBinomialQF"):
+    if example["function"] in skipFcnList:
         print("%4d    skipped %s" % (counter + 1, example["function"]))
         continue
 
@@ -57,7 +56,7 @@ for counter, example in enumerate(getExamples(open(inputFile))):
             elif "result" in trial:
                 print("expected: " + repr(trial["result"]))
             print("")
-            continue
+            raise
 
         if "success" in result:
             actual = json.dumps(result["success"])
