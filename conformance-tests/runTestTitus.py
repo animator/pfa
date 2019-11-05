@@ -25,11 +25,11 @@ patternFcnList = ("model.tree.")
 
 for counter, example in enumerate(getExamples(open(inputFile))):
     if any([pattern in example["function"] for pattern in patternFcnList]):
-        print("%4d    skipped %s" % (counter + 1, example["function"]))
+        print("%4d    pat skipped %s" % (counter + 1, example["function"]))
         continue         
 
     if example["function"] in skipFcnList:
-        print("%4d    skipped %s" % (counter + 1, example["function"]))
+        print("%4d    fcn skipped %s" % (counter + 1, example["function"]))
         continue
 
     engine, = PFAEngine.fromJson(example["engine"])
