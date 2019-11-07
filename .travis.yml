@@ -17,7 +17,11 @@ before_install:
   - cd $HOME/cached
   - pwd
   - ls
-  - [ ! -f pfa-tests.json ] && wget http://github.com/datamininggroup/pfa/releases/download/0.8.1/pfa-tests.json
+  - |
+    if [ ! -f pfa-tests.json ]
+    then
+      wget http://github.com/datamininggroup/pfa/releases/download/0.8.1/pfa-tests.json
+    fi
   - ls  
   - head pfa-tests.json
   - cd $HOME/build/animator/pfa
