@@ -30,7 +30,7 @@ install:
 script:
   - pwd
   - ls
-  - python conformance-tests/runTestTitus.py conformance-tests/pfa-tests-re.json
+  - python conformance-tests/runTestTitus.py $HOME/cached/pfa-tests.json
   
 # Push the results back to codecov
 # after_success:
