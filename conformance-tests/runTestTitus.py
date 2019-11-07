@@ -10,7 +10,7 @@ from runTest import getExamples, convertOut, compare
 
 inputFile = sys.argv[1]
 skipFcnList = ("prob.dist.binomialQF", "prob.dist.hypergeometricPDF", "prob.dist.hypergeometricCDF", "prob.dist.hypergeometricQF", "prob.dist.negativeBinomialPDF", "prob.dist.negativeBinomialQF")
-patternFcnList = ("model.tree.", )
+patternFcnList = ()
 # Failures that I'm giving up on:
 # 
 # prob.dist.binomialQF({"p": 0.99999, "prob": 1e-05, "size": 1}) should be 1, is 0 (rounding in count)
@@ -83,6 +83,14 @@ for counter, example in enumerate(getExamples(open(inputFile))):
                     print("                            actual:   " + actual)
                 return True
 
+            def mapToFloat(value):
+                if value in ["inf", "-inf"]:
+                    return float(value)
+                elif value == "nan":
+                    return float("inf")
+                else:
+                    return value
+
             if "success" in result:
                 left = trial["result"]
                 right = result["success"]
@@ -90,8 +98,16 @@ for counter, example in enumerate(getExamples(open(inputFile))):
                 if trial.get("nondeterministic", None) == "unordered":
                     if not isinstance(left, list) or not isinstance(right, list):
                         raise Exception
-#                    left.sort()
-#                    right.sort()
+                    try:
+                        left.sort()
+                        right.sort()
+                    except:
+                        if isinstance(left[0], dict) and isinstance(right[0], dict):
+                            try:
+                                left = sorted([sorted([[k, mapToFloat(v)] for k,v in d.items()]) for d in left])
+                                right = sorted([sorted([[k, mapToFloat(v)] for k,v in d.items()]) for d in right])
+                            except: pass
+                        pass
 
                 for errorMessage in compare(left, right, 1e-4, 0.05, 1e80):
                     functionWritten = maybeWriteFunction(functionWritten)
