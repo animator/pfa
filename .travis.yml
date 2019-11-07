@@ -7,6 +7,16 @@
 language: python
 python:
   - "3.7"
+
+
+cache:
+  directories:
+    - $HOME/cached
+
+before_install:
+  - wget https://cdn.fileinfo.com/img/ss/lg/txt_109.jpg -o $HOME/cached/img.jpg
+  - pwd
+  - ls
   
 # command to install dependencies
 install:
@@ -14,6 +24,8 @@ install:
   
 # command to run tests
 script:
+  - pwd
+  - ls
   - python conformance-tests/runTestTitus.py conformance-tests/pfa-tests-re.json
   
 # Push the results back to codecov
