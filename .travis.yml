@@ -14,9 +14,9 @@ cache:
     - $HOME/cached
 
 before_install:
-  - wget https://cdn.fileinfo.com/img/ss/lg/txt_109.jpg -o $HOME/cached/img.jpg
+  - cd $HOME/cached
   - pwd
-  - ls
+  - ls  
   
 # command to install dependencies
 install:
