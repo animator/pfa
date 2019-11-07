@@ -16,7 +16,11 @@ cache:
 before_install:
   - cd $HOME/cached
   - pwd
+  - ls
+  - wget http://github.com/datamininggroup/pfa/releases/download/0.8.1/pfa-tests.json
   - ls  
+  - head pfa-tests.json
+  - cd $HOME/build/animator/pfa
   
 # command to install dependencies
 install:
