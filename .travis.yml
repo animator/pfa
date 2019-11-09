@@ -6,6 +6,8 @@
 
 language: python
 python:
+  - "3.2"
+  - "3.3"
   - "3.4"
   - "3.5"
   - "3.6"
@@ -18,14 +20,11 @@ cache:
 
 before_install:
   - cd $HOME/cached
-  - pwd
-  - ls
   - |
     if [ ! -f pfa-tests.json ]
     then
       wget http://github.com/datamininggroup/pfa/releases/download/0.8.1/pfa-tests.json
-    fi
-  - ls  
+    fi 
   - head pfa-tests.json
   - cd $HOME/build/animator/pfa
   
@@ -35,8 +34,6 @@ install:
   
 # command to run tests
 script:
-  - pwd
-  - ls
   - python conformance-tests/runTestTitus.py $HOME/cached/pfa-tests.json
   
 # Push the results back to codecov
