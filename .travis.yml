@@ -28,7 +28,7 @@ before_install:
   
 # command to install dependencies
 install:
-  - pip install git+https://github.com/animator/python3-titus.git
+  - pip install -i https://test.pypi.org/simple/ titus2
   
 # command to run tests
 script:
